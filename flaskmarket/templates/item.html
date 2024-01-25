@@ -1,0 +1,115 @@
+{% extends "layout.html" %}
+{% block content %}
+  <!-- <article class="media content-section">
+    <img class="article-img" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
+    <div class="media-body">
+      <div class="article-metadata">
+        <a class="mr-2" href="#">{{ item.author.email }}</a>
+        <small class="text-muted">{{ item.listeddate.strftime('%Y-%m-%d') }}</small>
+        {% if item.author == current_user %}
+          <div>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('item', item_id=item.id) }}">Update</a>
+            <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+          </div>
+        {% endif %}
+      </div>
+      <h2 class="article-title"> {{ item.title }}</h2>
+        <p class="article-content">${{ item.startingprice|round(2) }}</p>
+        <p class="article-content">{{ item.description }}</p>
+        <p class="article-content">{{ item.category }}</p>
+        <p class="article-content">{{ item.enddate.strftime('%h %d, %Y %I:%M%p') }}</p>
+        <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + item.author.image_file) }}">
+    </div>
+  </article> -->
+  <article class="content-section row d-flex justify-content-center">
+    <div class="col-12 d-flex justify-content-center">
+      <img class="article-img3" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
+    </div>
+    <div class="">
+      <div class= "">
+        <a class="article-title h2" href="{{ url_for('item', item_id=item.id) }}">{{ item.title }}</a>
+        {% if item.category != "None" %}
+        <small class="ml-1 \text-muted">{{ item.category }}</small>
+        {% endif %}
+      </div>
+      <div class="">{{ item.description }}</div>
+      <div class="">Current Bid: ${{ item.startingprice|round(2) }}</div>
+      <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+      <div class="border-top">
+        <small>seller: <a class="mr-2" href="#">{{ item.author.email }}</a></small>
+        <small class="text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</small>
+        {% if item.author == current_user %}
+          <div>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('item', item_id=item.id) }}">Update</a>
+            <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+          </div>
+        {% elif current_user.id %}
+        <div>
+          <form method="POST" action="">
+            {{ bidform.hidden_tag() }}
+            <fieldset class="form-group">
+              <legend class="border-bottom mb-4">{{ legend }}</legend>
+              <div class="form-group">
+                  {{ bidform.currentbid.label(class="form-control-label") }}
+                  {% if bidform.currentbid.errors %}
+                      {{ bidform.currentbid(class="form-control form-control-lg is-invalid") }}
+                      <div class="invalid-feedback">
+                          {% for error in bidform.currentbid.errors %}
+                              <span>{{ error }}</span>
+                          {% endfor %}
+                      </div>
+                  {% else %}
+                      {{ bidform.currentbid(class="form-control form-control-lg") }}
+                  {% endif %}
+              </div>
+            </fieldset>
+            <div class="form-group">
+                {{ bidform.submit(class="btn btn-outline-info") }}
+            </div>
+          </form>
+        </div>
+        <div>
+          <form method="POST" action="">
+            {{ watchlistform.hidden_tag() }}
+            <fieldset class="form-group">
+              <div class="form-check">
+                {{ watchlistform.watching(class="form-check-input") }}
+                {{ watchlistform.watching.label(class="form-check-label") }}
+              </div>
+            </fieldset>
+            <div class="form-group">
+                {{ watchlistform.submit(class="btn btn-outline-info") }}
+            </div>
+        </form>
+      </div>
+        {% else %}
+        <div>
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('signin') }}">Sign In to Place Bid</a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+
+  <!-- Delete Modal -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Delete Item?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <form action="{{ url_for('delete_item', item_id=item.id) }}" method="POST">
+            <input class="btn btn-danger" type="submit" value="Delete">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+{% endblock content %}

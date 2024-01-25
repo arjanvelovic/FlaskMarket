@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block content %}
+    {% for item in items %}
+        <article class="content-section row align-items-center">
+          <div class="col-5 d-flex justify-content-center">
+            <img class="article-img2" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
+          </div>
+          <div class="col-7">
+            <div class="mb-2">
+              <a class="article-title h2" href="{{ url_for('item', item_id=item.id) }}">{{ item.title }}</a>
+              {% if item.category != "None" %}
+              <small class="ml-1 \text-muted">{{ item.category }}</small>
+              {% endif %}
+            </div>
+            <div class="article-content">Current Bid: ${{ item.startingprice|round(2) }}</div>
+            <div class="article-content">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+            <div class="border-top">
+              <small>seller: <a class="mr-2" href="#">{{ item.author.email }}</a></small>
+              <small class="text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</small>
+            </div>
+          </div>
+        </article>
+    {% endfor %}
+{% endblock content %}
