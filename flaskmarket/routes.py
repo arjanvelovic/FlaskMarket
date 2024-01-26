@@ -2,17 +2,19 @@ import os
 import secrets
 from PIL import Image
 from flask import render_template, url_for, flash, redirect, request, abort
-from flaskmarket import app, db, bcrypt
-from flaskmarket.forms import SignUpForm, SignInForm, UpdateAccountForm, ItemForm, BidForm, WatchlistForm
+from flaskmarket import app, db, bcrypt, mail
+from flaskmarket.forms import SignUpForm, SignInForm, UpdateAccountForm, ItemForm, BidForm, WatchlistForm, RequestResetForm, ResetPasswordForm
 from flaskmarket.models import User, Item, Bid, Watchlist
 from flask_login import login_user, current_user, logout_user, login_required
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
 from datetime import datetime, timedelta
+from flask_mail import Message
 
 @app.route("/")
 @app.route("/home")
 def home():
-    items = Item.query.all()
+    page = request.args.get('page', 1, type=int)
+    items = Item.query.order_by(Item.enddate.desc()).paginate(page=page, per_page=5)
     return render_template('home.html', items=items)
 
 @app.route("/about")
@@ -54,7 +56,6 @@ def signin():
 def logout():
     logout_user()
     return redirect(url_for('home'))
-
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
@@ -181,7 +182,18 @@ def update_item(item_id):
     if item.author != current_user:
         abort(403)
     form = ItemForm()
-    if form.validate_on_submit():
+    if form.validate_on_submit() and item.notactive:
+        if form.picture.data:
+            picture_file = save_picture2(form.picture.data)
+        else:
+            picture_file = item.image_file
+        itemrelist = Item(title=form.title.data, description=form.description.data, category=form.category.data, image_file=picture_file, price=form.price.data, author=current_user, enddate=datetime.utcnow() + timedelta(days=7) - timedelta(hours=5))
+        db.session.add(itemrelist)
+        db.session.commit()
+        flash('Your have relisted the item', 'success')
+        return redirect(url_for('home'))
+
+    elif form.validate_on_submit() and item.notactive == False:
         if form.picture.data:
             picture_file = save_picture2(form.picture.data)
         else:
@@ -192,17 +204,9 @@ def update_item(item_id):
         item.image_file = picture_file
         item.price = form.price.data
         item.hasbuyer = False
-
-        if item.notactive:
-            item.listeddate = datetime.utcnow() - timedelta(hours=5)
-            item.enddate = datetime.utcnow() + timedelta(days=7) - timedelta(hours=5)
-
         db.session.commit()
 
-        if item.notactive:
-            flash('Your have relisted your item', 'success')
-        else:
-            flash('Your item has been updated!', 'success')
+        flash('Your item has been updated!', 'success')
         return redirect(url_for('item', item_id=item.id))
     elif request.method == 'GET':
         form.title.data = item.title
@@ -225,3 +229,55 @@ def delete_item(item_id):
     db.session.commit()
     flash('Your item has been deleted!', 'success')
     return redirect(url_for('home'))
+
+@app.route("/user/<string:email>")
+def user_items(email):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.filter_by(email=email).first_or_404()
+    items = Item.query.filter_by(author=user)\
+        .order_by(Item.enddate.desc())\
+        .paginate(page=page, per_page=5)
+    return render_template('user_items.html', items=items, user=user)
+
+def send_reset_email(user):
+    token = user.get_reset_token()
+    msg = Message('Password Reset Request',
+                  sender='noreply@demo.com',
+                  recipients=[user.email])
+    msg.body = f'''To reset your password, visit the following link:
+{url_for('reset_token', token=token, _external=True)}
+
+If you did not make this request then simply ignore this email and no changes will be made.
+'''
+    mail.send(msg)
+
+
+@app.route("/reset_password", methods=['GET', 'POST'])
+def reset_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RequestResetForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        send_reset_email(user)
+        flash('An email has been sent with instructions to reset your password.', 'info')
+        return redirect(url_for('signin'))
+    return render_template('reset_request.html', title='Reset Password', form=form)
+
+
+@app.route("/reset_password/<token>", methods=['GET', 'POST'])
+def reset_token(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    user = User.verify_reset_token(token)
+    if user is None:
+        flash('That is an invalid or expired token', 'warning')
+        return redirect(url_for('reset_request'))
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.password = hashed_password
+        db.session.commit()
+        flash('Your password has been updated! You are now able to log in', 'success')
+        return redirect(url_for('signin'))
+    return render_template('reset_token.html', title='Reset Password', form=form)
