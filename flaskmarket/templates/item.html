@@ -14,7 +14,7 @@
         {% endif %}
       </div>
       <h2 class="article-title"> {{ item.title }}</h2>
-        <p class="article-content">${{ item.startingprice|round(2) }}</p>
+        <p class="article-content">${{ item.price|round(2) }}</p>
         <p class="article-content">{{ item.description }}</p>
         <p class="article-content">{{ item.category }}</p>
         <p class="article-content">{{ item.enddate.strftime('%h %d, %Y %I:%M%p') }}</p>
@@ -22,44 +22,72 @@
     </div>
   </article> -->
   <article class="content-section row d-flex justify-content-center">
+    {% if item.notactive and item.hasbuyer%}
+      <div class="bg-secondary w-100 text-center py-1 text-white">SOLD!</div>
+    {% elif item.notactive and item.hasbuyer == False %}
+      <div class="bg-secondary w-100 text-center py-1 text-white">Auction Ended</div>
+    {% endif %}
     <div class="col-12 d-flex justify-content-center">
       <img class="article-img3" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
     </div>
     <div class="">
-      <div class= "">
+      <div class= "border-bottom">
         <a class="article-title h2" href="{{ url_for('item', item_id=item.id) }}">{{ item.title }}</a>
         {% if item.category != "None" %}
         <small class="ml-1 \text-muted">{{ item.category }}</small>
         {% endif %}
       </div>
-      <div class="">{{ item.description }}</div>
-      <div class="">Current Bid: ${{ item.startingprice|round(2) }}</div>
-      <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
-      <div class="border-top">
-        <small>seller: <a class="mr-2" href="#">{{ item.author.email }}</a></small>
-        <small class="text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</small>
+      <div class="mt-4">Detials:</div>
+      <div class="mb-3">{{ item.description }}</div>
+
+      {% if item.notactive and item.hasbuyer%}
+        <div class="">Sold Price: ${{ item.price|round(2) }}</div>
+      {% elif item.notactive and item.hasbuyer == False %}
+      <div class="">Price: ${{ item.price|round(2) }}</div>
+      {% elif item.notactive == False %}
+        <div class="">Current Bid: ${{ item.price|round(2) }}</div>
+      {% endif %}
+
+      {% if item.notactive%}
+        <div class="">Ended: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+      {% else %}
+        <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+      {% endif %}
+
+      <div class="mt-3 mb-1">
         {% if item.author == current_user %}
-          <div>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('item', item_id=item.id) }}">Update</a>
-            <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
-          </div>
-        {% elif current_user.id %}
+          {% if item.notactive%}
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_item', item_id=item.id) }}">Relist Item</a>
+          {% else %}
+            {% if item.hasbuyer %}
+              <div>
+                <small>The listing cannot be updated or deleted once a bid has been made</small>
+              </div>
+            {% else %}
+              <div>
+                <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('update_item', item_id=item.id) }}">Update</a>
+                <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+              </div>
+            {% endif %}
+          {% endif %}
+          
+        {% elif current_user.id and item.notactive == False%}
         <div>
           <form method="POST" action="">
             {{ bidform.hidden_tag() }}
             <fieldset class="form-group">
               <legend class="border-bottom mb-4">{{ legend }}</legend>
               <div class="form-group">
-                  {{ bidform.currentbid.label(class="form-control-label") }}
-                  {% if bidform.currentbid.errors %}
-                      {{ bidform.currentbid(class="form-control form-control-lg is-invalid") }}
+                  {{ bidform.bidvalue.label(class="form-control-label") }}
+                  {% if bidform.bidvalue.errors %}
+                      {{ bidform.bidvalue(class="form-control form-control-lg is-invalid") }}
                       <div class="invalid-feedback">
-                          {% for error in bidform.currentbid.errors %}
+                          {% for error in bidform.bidvalue.errors %}
                               <span>{{ error }}</span>
                           {% endfor %}
                       </div>
                   {% else %}
-                      {{ bidform.currentbid(class="form-control form-control-lg") }}
+                      {{ bidform.bidvalue(class="form-control form-control-lg") }}
                   {% endif %}
               </div>
             </fieldset>
@@ -68,7 +96,7 @@
             </div>
           </form>
         </div>
-        <div>
+        <!-- <div>
           <form method="POST" action="">
             {{ watchlistform.hidden_tag() }}
             <fieldset class="form-group">
@@ -80,13 +108,19 @@
             <div class="form-group">
                 {{ watchlistform.submit(class="btn btn-outline-info") }}
             </div>
-        </form>
-      </div>
+          </form>
+       </div> -->
         {% else %}
-        <div>
-          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('signin') }}">Sign In to Place Bid</a>
-        </div>
+        {% if item.notactive == False %}
+          <div>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('signin') }}">Sign In to Place Bid</a>
+          </div>
         {% endif %}
+        {% endif %}
+      </div>
+      <div class="border-top">
+        <small>seller: <a class="mr-2" href="#">{{ item.author.email }}</a></small>
+        <small class="text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</small>
       </div>
     </div>
   </article>

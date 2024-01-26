@@ -1,0 +1,11 @@
+from flaskmarket import db, app
+app.app_context().push()
+db.drop_all()
+db.create_all()
+from flaskmarket import User, Item, Bid, Watchlist
+
+
+Things to fix
+##########################
+-remove active from item
+-fix watchlist form

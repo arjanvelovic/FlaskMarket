@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
+from typing import Any
 from flaskmarket import db, login_manager
 from flask_login import UserMixin
+from sqlalchemy.ext.hybrid import hybrid_property
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -29,27 +31,36 @@ class Item(db.Model):
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(100), nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default='default2.jpg')
-    startingprice = db.Column(db.Numeric, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    image_file = db.Column(db.String(50), nullable=False, default='default2.jpg')
+    price = db.Column(db.Numeric, nullable=False)
+    seller = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     listeddate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    enddate = db.Column(db.DateTime, nullable=False, default=(datetime.utcnow() + timedelta(days=7) - timedelta(hours=5)))
-    active = db.Column(db.Boolean, nullable = False, default = True)
-    bids = db.relationship('Bid', backref='item', lazy=True)
+    enddate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # active = db.Column(db.Boolean, nullable = False, default = True)
+    hasbuyer = db.Column(db.Boolean, nullable = False, default = False)
+    bidinfo = db.relationship('Bid', backref='item', lazy=True)
     watches = db.relationship('Watchlist', backref='item', lazy=True)
 
     def __repr__(self):
-        return f"Item{self.id}('{self.title}', '{self.user_id}', '{self.listeddate}', '{self.enddate}', '{self.bids}')"
+        return f"Itemid:{self.id}('{self.title}', '{self.seller}', '{self.listeddate}', '{self.enddate}', '{self.bidinfo}')"
+    
+    @hybrid_property
+    def notactive(self):
+        if datetime.utcnow() - timedelta(hours=0) >= self.enddate:
+            return True
+        else:
+            return False
+
     
 class Bid(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    currentbid = db.Column(db.Numeric, nullable=False)
+    bidvalue = db.Column(db.Numeric, nullable=False)
     bidtime = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"Bid{self.id}('{self.currentbid}', '{self.item_id}', '{self.user_id}')"
+        return f"Bidid:{self.id}('{self.bidvalue}', '{self.item_id}', '{self.user_id}')"
     
 class Watchlist(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -58,4 +69,4 @@ class Watchlist(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
-        return f"Bid{self.id}('{self.watching}', '{self.item_id}', '{self.user_id}')"
+        return f"Watchlistid:{self.id}('{self.watching}', '{self.item_id}', '{self.user_id}')"

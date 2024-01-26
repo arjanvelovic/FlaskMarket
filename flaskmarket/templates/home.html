@@ -2,6 +2,11 @@
 {% block content %}
     {% for item in items %}
         <article class="content-section row align-items-center">
+          {% if item.notactive and item.hasbuyer%}
+            <div class="bg-secondary w-100 text-center text-white">SOLD!</div>
+          {% elif item.notactive and item.hasbuyer == False %}
+            <div class="bg-secondary w-100 text-center text-white">Auction Ended</div>
+          {% endif %}
           <div class="col-5 d-flex justify-content-center">
             <img class="article-img2" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
           </div>
@@ -12,11 +17,23 @@
               <small class="ml-1 \text-muted">{{ item.category }}</small>
               {% endif %}
             </div>
-            <div class="article-content">Current Bid: ${{ item.startingprice|round(2) }}</div>
-            <div class="article-content">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
-            <div class="border-top">
-              <small>seller: <a class="mr-2" href="#">{{ item.author.email }}</a></small>
-              <small class="text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</small>
+
+            {% if item.notactive and item.hasbuyer%}
+              <div class="">Sold Price: ${{ item.price|round(2) }}</div>
+            {% elif item.notactive and item.hasbuyer == False %}
+            <div class="">Price: ${{ item.price|round(2) }}</div>
+            {% elif item.notactive == False %}
+              <div class="">Current Bid: ${{ item.price|round(2) }}</div>
+            {% endif %}
+            
+            {% if item.notactive%}
+              <div class="">Ended: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+            {% else %}
+              <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+            {% endif %}
+            <div class="border-top grid">
+              <div class="small">seller: <a class="mr-2" href="#">{{ item.author.email }}</a></div>
+              <div class="small text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</div>
             </div>
           </div>
         </article>

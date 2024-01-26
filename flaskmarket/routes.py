@@ -7,7 +7,7 @@ from flaskmarket.forms import SignUpForm, SignInForm, UpdateAccountForm, ItemFor
 from flaskmarket.models import User, Item, Bid, Watchlist
 from flask_login import login_user, current_user, logout_user, login_required
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
-from datetime import datetime
+from datetime import datetime, timedelta
 
 @app.route("/")
 @app.route("/home")
@@ -75,7 +75,7 @@ def save_picture2(form_picture):
     picture_fn = random_hex + f_ext
     picture_path = os.path.join(app.root_path, 'static/item_pics', picture_fn)
 
-    output_size = (500, 500)
+    output_size = (300, 400)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
     i.save(picture_path)
@@ -106,7 +106,6 @@ def account():
     return render_template('account.html', title='Account',
                            image_file=image_file, form=form)
 
-
 @app.route("/item/new", methods=['GET', 'POST'])
 @login_required
 def new_item():
@@ -114,9 +113,9 @@ def new_item():
     if form.validate_on_submit():
         if form.picture.data:
             picture_file = save_picture2(form.picture.data)
-            item = Item(title=form.title.data, description=form.description.data, category=form.category.data, image_file=picture_file, startingprice=form.startingprice.data, author=current_user)
         else:
-            item = Item(title=form.title.data, description=form.description.data, category=form.category.data, startingprice=form.startingprice.data, author=current_user)
+            picture_file = 'default2.jpg'
+        item = Item(title=form.title.data, description=form.description.data, category=form.category.data, image_file=picture_file, price=form.price.data, author=current_user, enddate=datetime.utcnow() + timedelta(days=7) - timedelta(hours=5))
         db.session.add(item)
         db.session.commit()
         flash('Your item has been created!', 'success')
@@ -130,47 +129,48 @@ def item(item_id):
 
     bidform = BidForm()
     watchlistform = WatchlistForm()
-    bidform.currentbid.validators = [NumberRange(min=item.startingprice+1, message='You must beat the current bid by at least $1')]
-    # bidform.currentbid.data = item.startingprice+1
+    bidform.bidvalue.validators = [NumberRange(min=item.price+1, message='You must beat the current bid by atleast $1')]
+    # bidform.bidvalue.data = item.price+1
 
-    # app.logger.info('this prints stuff')
+    app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
 
     if current_user.is_authenticated:
         if bidform.validate_on_submit():
             if Bid.query.filter_by(item_id=item_id).all():
                 bid = Bid.query.filter_by(item_id=item_id).first()
-                bid.currentbid = bidform.currentbid.data
+                bid.bidvalue = bidform.bidvalue.data
                 bid.user_id = current_user.id
                 bid.bidtime = datetime.utcnow()
             else:
-                bid = Bid(currentbid=bidform.currentbid.data, item_id=item_id, user_id=current_user.id)
+                bid = Bid(bidvalue=bidform.bidvalue.data, item_id=item_id, user_id=current_user.id)
+                item.hasbuyer = True
                 db.session.add(bid)
             
-            item.startingprice = bidform.currentbid.data
+            item.price = bidform.bidvalue.data
             db.session.commit()
             flash('You have the highest Bid', 'success')
             return redirect(url_for('item', item_id=item.id))
         
-        watchlistform.watching.data = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).all()
+        # watchlistform.watching.data = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).all()
 
-        if watchlistform.validate_on_submit():
-            app.logger.info(watchlistform.watching.raw_data)
-            if watchlistform.watching.raw_data:
-                app.logger.info('added to watchlist')
-                watchlist = Watchlist(watching = True, item_id=item_id, user_id=current_user.id)
-                db.session.add(watchlist)
-                flash('Added to Watch List', 'success')
-            else:
-                app.logger.info('deleted from watchlist')
-                watchlist = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).first()
-                try:
-                    db.session.delete(watchlist)
-                    flash('Removed from Watch List', 'success')
-                except:
-                    print("Something else went wrong")
+        # if watchlistform.validate_on_submit():
+        #     app.logger.info(watchlistform.watching.raw_data)
+        #     if watchlistform.watching.raw_data:
+        #         app.logger.info('added to watchlist')
+        #         watchlist = Watchlist(watching = True, item_id=item_id, user_id=current_user.id)
+        #         db.session.add(watchlist)
+        #         flash('Added to Watch List', 'success')
+        #     else:
+        #         app.logger.info('deleted from watchlist')
+        #         watchlist = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).first()
+        #         try:
+        #             db.session.delete(watchlist)
+        #             flash('Removed from Watch List', 'success')
+        #         except:
+        #             print("Something else went wrong")
 
-            db.session.commit()
-            return redirect(url_for('item', item_id=item.id))
+        #     db.session.commit()
+        #     return redirect(url_for('item', item_id=item.id))
 
     return render_template('item.html', item=item, bidform=bidform, watchlistform = watchlistform)
 
@@ -182,16 +182,37 @@ def update_item(item_id):
         abort(403)
     form = ItemForm()
     if form.validate_on_submit():
+        if form.picture.data:
+            picture_file = save_picture2(form.picture.data)
+        else:
+            picture_file = item.image_file
         item.title = form.title.data
-        item.content = form.content.data
+        item.description = form.description.data
+        item.category = form.category.data
+        item.image_file = picture_file
+        item.price = form.price.data
+        item.hasbuyer = False
+
+        if item.notactive:
+            item.listeddate = datetime.utcnow() - timedelta(hours=5)
+            item.enddate = datetime.utcnow() + timedelta(days=7) - timedelta(hours=5)
+
         db.session.commit()
-        flash('Your item has been updated!', 'success')
+
+        if item.notactive:
+            flash('Your have relisted your item', 'success')
+        else:
+            flash('Your item has been updated!', 'success')
         return redirect(url_for('item', item_id=item.id))
     elif request.method == 'GET':
         form.title.data = item.title
-        form.content.data = item.content
-    return render_template('create_post.html', title='Update Item',
-                           form=form, legend='Update Item')
+        form.description.data = item.description
+        form.category.data = item.category
+        form.price.data = item.price
+    if item.notactive:
+        return render_template('create_item.html', title='Relist Item', form=form, legend='Relist Item')
+    else:
+        return render_template('create_item.html', title='Update Item', form=form, legend='Update Item')
 
 
 @app.route("/item/<int:item_id>/delete", methods=['POST'])

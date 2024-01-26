@@ -53,7 +53,7 @@
                     {{ form.phonenumber.label(class="form-control-label") }}
 
                     {% if form.phonenumber.errors %}
-                        {{ form.phonenumber(class="form-control form-control-lg is-invalid") }}
+                        <!-- {{ form.phonenumber(class="form-control form-control-lg is-invalid") }} -->
                         <div class="invalid-feedback">
                             {% for error in form.phonenumber.errors %}
                                 <span>{{ error }}</span>

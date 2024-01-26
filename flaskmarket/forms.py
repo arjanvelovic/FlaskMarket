@@ -1,8 +1,8 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from flask_login import current_user
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField
-from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, IntegerField
+from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError, NumberRange
 from flaskmarket.models import User, Bid
 from sqlalchemy import func
 
@@ -13,11 +13,11 @@ class SignUpForm(FlaskForm):
                            validators=[DataRequired()])
     address = StringField('Address',
                            validators=[DataRequired()])
-    phonenumber = StringField('Phone Number',
-                           validators=[DataRequired(), Length(min=10, max=20)])
+    phonenumber = IntegerField('Phone Number',
+                               validators=[DataRequired(), NumberRange(min=1000000000, max=999999999999999, message="please enter a valid phone number")])
     email = StringField('Email',
                         validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=8)])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=8, message="you password must be atleast 8 characters")])
     confirm_password = PasswordField('Confirm Password',
                                      validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('Sign Up')
@@ -42,8 +42,8 @@ class UpdateAccountForm(FlaskForm):
                            validators=[DataRequired()])
     address = StringField('Address',
                            validators=[DataRequired()])
-    phonenumber = StringField('Phone Number',
-                           validators=[DataRequired(), Length(min=10, max=20)])
+    phonenumber = IntegerField('Phone Number',
+                           validators=[DataRequired(), NumberRange(min=1000000000, max=999999999999999, message='please enter a valid phone number')])
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
@@ -63,13 +63,13 @@ class ItemForm(FlaskForm):
     ]
     title = StringField('Title', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    startingprice = DecimalField('Starting Price', places = 2, validators=[DataRequired()])
+    price = DecimalField('Starting Price', places = 2, validators=[DataRequired()])
     category = SelectField('Categories', choices = CATEGORIES, validators=[DataRequired()])
     picture = FileField('Upload Item Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('List Item')
 
 class BidForm(FlaskForm):
-    currentbid = DecimalField('Place a Bid', validators=[DataRequired()])
+    bidvalue = DecimalField('Place a Bid', validators=[DataRequired()])
     submit = SubmitField('Place Bid')
 
 class WatchlistForm(FlaskForm):
