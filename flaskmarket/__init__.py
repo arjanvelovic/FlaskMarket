@@ -4,15 +4,13 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flaskmarket.config import Config
-
-app = Flask(__name__)
     
-db = SQLAlchemy(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'signin'
+db = SQLAlchemy()
+bcrypt = Bcrypt()
+login_manager = LoginManager()
+login_manager.login_view = 'users.signin'
 login_manager.login_message_category = 'info'
-mail = Mail(app)
+mail = Mail()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -26,14 +24,16 @@ def create_app(config_class=Config):
     from flaskmarket.users.routes import users
     from flaskmarket.items.routes import items
     from flaskmarket.main.routes import main
+    from flaskmarket.errors.handlers import errors
     app.register_blueprint(users)
     app.register_blueprint(items)
     app.register_blueprint(main)
+    app.register_blueprint(errors)
 
     return app
 
 
-from flaskmarket import routes
+# from flaskmarket import routes
 
 
 # from datetime import datetime, timedelta

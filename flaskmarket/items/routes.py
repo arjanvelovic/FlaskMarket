@@ -1,8 +1,8 @@
 from flask import (render_template, url_for, flash,
-                   redirect, request, abort, Blueprint)
+                   redirect, request, abort, Blueprint, current_app)
 from flask_login import current_user, login_required
-from flaskmarket import db, app
-from flaskmarket.models import Item, Bid, Watchlist
+from flaskmarket import db
+from flaskmarket.models import Item, Bid
 from flaskmarket.items.forms import ItemForm, BidForm, WatchlistForm
 from wtforms.validators import  NumberRange
 from datetime import datetime, timedelta
@@ -24,7 +24,7 @@ def new_item():
         db.session.add(item)
         db.session.commit()
         flash('Your item has been created!', 'success')
-        return redirect(url_for('home'))
+        return redirect(url_for('main.home'))
     return render_template('create_item.html', title='New Item',
                            form=form, legend='New Item')
 
@@ -37,7 +37,7 @@ def item(item_id):
     bidform.bidvalue.validators = [NumberRange(min=item.price+1, message='You must beat the current bid by atleast $1')]
     # bidform.bidvalue.data = item.price+1
 
-    app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
+    current_app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
 
     if current_user.is_authenticated:
         if bidform.validate_on_submit():
@@ -54,7 +54,7 @@ def item(item_id):
             item.price = bidform.bidvalue.data
             db.session.commit()
             flash('You have the highest Bid', 'success')
-            return redirect(url_for('item', item_id=item.id))
+            return redirect(url_for('items.item', item_id=item.id))
         
         # watchlistform.watching.data = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).all()
 
@@ -95,7 +95,7 @@ def update_item(item_id):
         db.session.add(itemrelist)
         db.session.commit()
         flash('Your have relisted the item', 'success')
-        return redirect(url_for('home'))
+        return redirect(url_for('main.home'))
 
     elif form.validate_on_submit() and item.notactive == False:
         if form.picture.data:
@@ -111,7 +111,7 @@ def update_item(item_id):
         db.session.commit()
 
         flash('Your item has been updated!', 'success')
-        return redirect(url_for('item', item_id=item.id))
+        return redirect(url_for('items.item', item_id=item.id))
     elif request.method == 'GET':
         form.title.data = item.title
         form.description.data = item.description
@@ -132,4 +132,4 @@ def delete_item(item_id):
     db.session.delete(item)
     db.session.commit()
     flash('Your item has been deleted!', 'success')
-    return redirect(url_for('home'))
+    return redirect(url_for('main.home'))
