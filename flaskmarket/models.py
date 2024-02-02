@@ -53,8 +53,6 @@ class Item(db.Model):
     seller = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     listeddate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     enddate = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    # delete active
-    active = db.Column(db.Boolean, nullable = False, default = True)
     hasbuyer = db.Column(db.Boolean, nullable = False, default = False)
     bidinfo = db.relationship('Bid', backref='item', lazy=True)
     watches = db.relationship('Watchlist', backref='item', lazy=True)
@@ -68,6 +66,10 @@ class Item(db.Model):
             return True
         else:
             return False
+    
+    @notactive.expression
+    def notactive(cls):
+        return cls.notactive()
 
     
 class Bid(db.Model):

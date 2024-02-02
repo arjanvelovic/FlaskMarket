@@ -1,53 +1,93 @@
 {% extends "layout.html" %}
 {% block content %}
-    {% for item in items %}
-        <article class="content-section row align-items-center">
-          {% if item.notactive and item.hasbuyer%}
-            <div class="bg-secondary w-100 text-center text-white">SOLD!</div>
-          {% elif item.notactive and item.hasbuyer == False %}
-            <div class="bg-secondary w-100 text-center text-white">Auction Ended</div>
-          {% endif %}
-          <div class="col-5 d-flex justify-content-center">
-            <img class="article-img2" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
-          </div>
-          <div class="col-7">
-            <div class="mb-2">
-              <a class="article-title h2" href="{{ url_for('items.item', item_id=item.id) }}">{{ item.title }}</a>
-              {% if item.category != "None" %}
-              <small class="ml-1 \text-muted">{{ item.category }}</small>
-              {% endif %}
+  <div class="d-flex justify-content-center w-100 ">
+    <form method="POST" action="" >
+        {{ form.hidden_tag() }}
+        <fieldset class="row align-center">
+            <div class="col-4">
+                {% if form.title.errors %}
+                    {{ form.title(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.title(class="form-control form-control-lg") }}
+                {% endif %}
             </div>
-
-            {% if item.notactive and item.hasbuyer%}
-              <div class="">Sold Price: ${{ item.price|round(2) }}</div>
-            {% elif item.notactive and item.hasbuyer == False %}
-            <div class="">Price: ${{ item.price|round(2) }}</div>
-            {% elif item.notactive == False %}
-              <div class="">Current Bid: ${{ item.price|round(2) }}</div>
-            {% endif %}
-            
-            {% if item.notactive%}
-              <div class="">Ended: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
-            {% else %}
-              <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
-            {% endif %}
-            <div class="border-top grid">
-              <div class="small">seller: <a class="mr-2" href="{{ url_for('users.user_items', email=item.author.email) }}">{{ item.author.email }}</a></div>
-              <div class="small text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</div>
+            <div class="col-4">
+                {% if form.category.errors %}
+                    {{ form.category(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.category.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.category(class="form-control form-control-lg") }}
+                {% endif %}
             </div>
+            <div class="col-2">
+              {{ form.ended(class="form-check-input") }}
+              {{ form.ended.label(class="form-check-label") }}
           </div>
-        </article>
-    {% endfor %}
+          <div class="col-2">
+            {{ form.submit(class="btn btn-outline-info") }}
+          </div>
+        </fieldset>
+        
+    </form>
+  </div>
 
-    {% for page_num in items.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-      {% if page_num %}
-        {% if items.page == page_num %}
-          <a class="btn btn-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
-        {% else %}
-          <a class="btn btn-outline-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
-        {% endif %}
-      {% else %}
-        ...
+  {% for item in items %}
+    <article class="content-section row align-items-center">
+      {% if item.notactive and item.hasbuyer%}
+        <div class="bg-secondary w-100 text-center text-white">SOLD!</div>
+      {% elif item.notactive and item.hasbuyer == False %}
+        <div class="bg-secondary w-100 text-center text-white">Auction Ended</div>
       {% endif %}
-    {% endfor %}
+      <div class="col-5 d-flex justify-content-center">
+        <img class="article-img2" src="{{ url_for('static', filename='item_pics/' + item.image_file) }}">
+      </div>
+      <div class="col-7">
+        <div class="mb-2">
+          <a class="article-title h2" href="{{ url_for('items.item', item_id=item.id) }}">{{ item.title }}</a>
+          {% if item.category != "None" %}
+          <small class="ml-1 \text-muted">{{ item.category }}</small>
+          {% endif %}
+        </div>
+
+        {% if item.notactive and item.hasbuyer%}
+          <div class="">Sold Price: ${{ item.price|round(2) }}</div>
+        {% elif item.notactive and item.hasbuyer == False %}
+        <div class="">Price: ${{ item.price|round(2) }}</div>
+        {% elif item.notactive == False %}
+          <div class="">Current Bid: ${{ item.price|round(2) }}</div>
+        {% endif %}
+        
+        {% if item.notactive%}
+          <div class="">Ended: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+        {% else %}
+          <div class="">Auction Ends: {{ item.enddate.strftime('%h %d, %I:%M%p') }}</div>
+        {% endif %}
+        <div class="border-top grid">
+          <div class="small">seller: <a class="mr-2" href="{{ url_for('users.user_items', email=item.author.email) }}">{{ item.author.email }}</a></div>
+          <div class="small text-muted">listed: {{ item.listeddate.strftime('%m-%d-%Y') }}</div>
+        </div>
+      </div>
+    </article>
+  {% endfor %}
+
+  {% for page_num in items.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+      {% if items.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+      {% else %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for('main.home', page=page_num) }}">{{ page_num }}</a>
+      {% endif %}
+    {% else %}
+      ...
+    {% endif %}
+  {% endfor %}
 {% endblock content %}

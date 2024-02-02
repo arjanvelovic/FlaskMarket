@@ -117,10 +117,10 @@ def update_item(item_id):
         form.description.data = item.description
         form.category.data = item.category
         form.price.data = item.price
-    if item.notactive:
-        return render_template('create_item.html', title='Relist Item', form=form, legend='Relist Item')
-    else:
-        return render_template('create_item.html', title='Update Item', form=form, legend='Update Item')
+        if item.notactive:
+            return render_template('create_item.html', title='Relist Item', form=form, legend='Relist Item')
+        else:
+            return render_template('create_item.html', title='Update Item', form=form, legend='Update Item')
 
 
 @items.route("/item/<int:item_id>/delete", methods=['POST'])

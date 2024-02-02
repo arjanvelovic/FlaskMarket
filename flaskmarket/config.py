@@ -1,11 +1,17 @@
 import os
+from dotenv import load_dotenv
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 class Config:
-    SECRET_KEY = '5791628bb0b13ce0c676dfde280ba245'
+    FLASK_ENV = os.getenv('FLASK_ENV')
+    SECRET_KEY = os.getenv('SECRET_KEY')
+
     SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
+
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 465
-    MAIL_USERNAME = 'avelovic96@gmail.com'
-    MAIL_PASSWORD = 'cyka iffl xuba qsvk'
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_USE_TLS = True
     MAIL_USE_SSL = True
