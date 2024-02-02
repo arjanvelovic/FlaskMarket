@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h5 class="mb-3">Listings by {{ user.email }}</h5>
+    <h5 class="mb-3">bids {{ user.email }}</h5>
     {% for item in items.items %}
     <article class="content-section row align-items-center">
         {% if item.notactive and item.hasbuyer%}

@@ -5,7 +5,7 @@ from wtforms.validators import DataRequired
 
 class SearchForm(FlaskForm):
     CATEGORIES = [
-        (None,'--- select a category ---'),
+        (None,'Search Category'),
         ('Business & Industrial','Business & Industrial'),
         ('Collectibles','Collectibles'),
         ('Electronics','Electronics'),
@@ -17,7 +17,7 @@ class SearchForm(FlaskForm):
         ('Toys','Toys'),
         ('Other','Other')
     ]
-    title = StringField('Title')
+    title = StringField('Title', render_kw={"placeholder": "Search Title"})
     category = SelectField('Categories', choices = CATEGORIES)
     ended = BooleanField('Ended?')
     submit = SubmitField('Search Item')

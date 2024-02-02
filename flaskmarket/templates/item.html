@@ -8,7 +8,7 @@
         <small class="text-muted">{{ item.listeddate.strftime('%Y-%m-%d') }}</small>
         {% if item.author == current_user %}
           <div>
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('item', item_id=item.id) }}">Update</a>
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('items.item', item_id=item.id) }}">Update</a>
             <button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
           </div>
         {% endif %}

@@ -66,7 +66,7 @@ def account():
     return render_template('account.html', title='Account',
                            image_file=image_file, form=form)
 
-@users.route("/user/<string:email>")
+@users.route("/useritems/<string:email>")
 def user_items(email):
     page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(email=email).first_or_404()
@@ -74,6 +74,15 @@ def user_items(email):
         .order_by(Item.enddate.desc())\
         .paginate(page=page, per_page=5)
     return render_template('user_items.html', items=items, user=user)
+
+@users.route("/userbids/<string:email>")
+def user_bids(email):
+    page = request.args.get('page', 1, type=int)
+    user = User.query.filter_by(email=email).first_or_404()
+    items = Item.query.filter_by(bidder=user)\
+        .order_by(Item.enddate.desc())\
+        .paginate(page=page, per_page=5)
+    return render_template('user_bids.html', items=items, user=user)
 
 
 @users.route("/reset_password", methods=['GET', 'POST'])

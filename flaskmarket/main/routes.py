@@ -22,6 +22,7 @@ def home():
     page = request.args.get('page', 1, type=int)
     form = SearchForm()
     if form.validate_on_submit():
+        
         if form.ended.data == []:
             ended = False
         else:
