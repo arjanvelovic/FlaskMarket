@@ -1,13 +1,14 @@
 {% extends "layout.html" %}
 {% block content %}
     {% if current_user == user %}
-      <h5 class="mb-3">Your Bids</h5>
+        <h5 class="mb-3">Your Purchases</h5>
     {% else %}
-      <h5 class="mb-3">{{ user.email }} Bids</h5>
+        <h5 class="mb-3">{{ user.email }} Purchases</h5>
     {% endif %}
-    {% for bid in bids %}
-    {% if bid.item.notactive == False%}
+    {% for bid in purchases %}
+    {% if bid.item.notactive%}
     <article class="content-section row align-items-center">
+          <div class="bg-secondary w-100 text-center text-white">SOLD!</div>
         <div class="col-5 d-flex justify-content-center">
           <img class="article-img2" src="{{ url_for('static', filename='item_pics/' + bid.item.image_file) }}">
         </div>

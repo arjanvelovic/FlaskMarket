@@ -35,9 +35,8 @@ def item(item_id):
     bidform = BidForm()
     watchlistform = WatchlistForm()
     bidform.bidvalue.validators = [NumberRange(min=item.price+1, message='You must beat the current bid by atleast $1')]
-    # bidform.bidvalue.data = item.price+1
 
-    current_app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
+    # current_app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
 
     if current_user.is_authenticated:
         if bidform.validate_on_submit():
@@ -108,6 +107,7 @@ def update_item(item_id):
         item.image_file = picture_file
         item.price = form.price.data
         item.hasbuyer = False
+        item.enddate = datetime.utcnow() + timedelta(minutes=10) - timedelta(hours=5)
         db.session.commit()
 
         flash('Your item has been updated!', 'success')

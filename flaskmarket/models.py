@@ -62,7 +62,7 @@ class Item(db.Model):
     
     @hybrid_property
     def notactive(self):
-        if datetime.utcnow() - timedelta(hours=0) >= self.enddate:
+        if datetime.utcnow() - timedelta(hours=5) >= self.enddate:
             return True
         else:
             return False

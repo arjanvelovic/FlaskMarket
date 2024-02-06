@@ -1,7 +1,7 @@
-from flask import render_template, url_for, flash, redirect, request, Blueprint
+from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from flaskmarket import db, bcrypt
-from flaskmarket.models import User, Item
+from flaskmarket.models import User, Item, Bid
 from flaskmarket.users.forms import (SignUpForm, SignInForm, UpdateAccountForm, RequestResetForm, ResetPasswordForm)
 from flaskmarket.users.utils import save_picture, send_reset_email
 
@@ -70,20 +70,43 @@ def account():
 def user_items(email):
     page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(email=email).first_or_404()
-    items = Item.query.filter_by(author=user)\
-        .order_by(Item.enddate.desc())\
-        .paginate(page=page, per_page=5)
-    return render_template('user_items.html', items=items, user=user)
+    if Item.query.filter_by(author=user).count() == 0:
+        return render_template('empty.html', user=user, keyword = 'listings')
+    else:
+        items = Item.query.filter_by(author=user)\
+            .order_by(Item.enddate.desc())\
+            .paginate(page=page, per_page=5)
+        return render_template('user_items.html', items=items, user=user)
 
 @users.route("/userbids/<string:email>")
 def user_bids(email):
-    page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(email=email).first_or_404()
-    items = Item.query.filter_by(bidder=user)\
-        .order_by(Item.enddate.desc())\
-        .paginate(page=page, per_page=5)
-    return render_template('user_bids.html', items=items, user=user)
-
+    allbids = Bid.query.filter_by(bidder=user)\
+        .order_by(Bid.bidtime.desc())
+    bids = []
+    for bid in allbids:
+        if bid.item.notactive == False:
+            bids.append(bid)
+    if len(bids) == 0:
+        return render_template('empty.html', user=user, keyword = 'bids')
+    else:
+        return render_template('user_bids.html', bids=bids, user=user)
+    
+@users.route("/userpurchases/<string:email>")
+def user_purchases(email):
+    user = User.query.filter_by(email=email).first_or_404()
+    allbids = Bid.query.filter_by(bidder=user)\
+        .order_by(Bid.bidtime.desc())
+    purchases = []
+    for bid in allbids:
+        if bid.item.hasbuyer:
+            purchases.append(bid)
+    # current_app.logger.info(f'{purchases}')
+    if len(purchases) == 0:
+        return render_template('empty.html', user=user, keyword = 'purchases')
+    else:
+        return render_template('user_purchases.html', purchases=purchases, user=user)
+    
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():

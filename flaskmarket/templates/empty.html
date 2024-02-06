@@ -1,0 +1,15 @@
+{% extends "layout.html" %}
+{% block content %}
+    {% if current_user == user %}
+      <h5 class="mb-3 capitalize">Your {{ keyword }}</h5>
+      <article class="content-section row align-items-center">
+        <div>You currently have no {{ keyword }}</div>
+    </article>
+    {% else %}
+      <h5 class="mb-3 capitalize">{{ user.email }} {{ keyword }}</h5>
+      <article class="content-section row align-items-center">
+        <div>{{ user.email }} currently has no {{ keyword }}</div>
+    </article>
+    {% endif %}
+    
+{% endblock content %}

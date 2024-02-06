@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
-    <h5 class="mb-3">Listings by {{ user.email }}</h5>
+    {% if current_user == user %}
+      <h5 class="mb-3">Your Listings</h5>
+    {% else %}
+      <h5 class="mb-3">{{ user.email }} Listings</h5>
+    {% endif %}
     {% for item in items.items %}
     <article class="content-section row align-items-center">
         {% if item.notactive and item.hasbuyer%}

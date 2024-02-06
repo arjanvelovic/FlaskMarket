@@ -40,7 +40,7 @@
     </form>
   </div>
 
-  <div class="row">
+  <div class="row justify-content-center">
     <div class="col-md-8">
       {% for item in items %}
         <article class="content-section row align-items-center">
@@ -93,18 +93,19 @@
         {% endif %}
       {% endfor %}
     </div>
+    {% if current_user.is_authenticated %}
     <div class="col-md-4">
       <div class="content-section">
-        <h3>Our Sidebar</h3>
-        <p class='text-muted'>You can put any information here you'd like.
+        <h3>Your Sidebar</h3>
           <ul class="list-group">
             <li class="list-group-item list-group-item-light"><a href="{{ url_for('users.user_items', email=current_user.email) }}">Your Listings</a></li>
             <li class="list-group-item list-group-item-light"><a href="{{ url_for('users.user_bids', email=current_user.email) }}">Your Bids</a></li>
-            <li class="list-group-item list-group-item-light">etc</li>
+            <li class="list-group-item list-group-item-light"><a href="{{ url_for('users.user_purchases', email=current_user.email) }}">Your Purchases</a></li>
           </ul>
-        </p>
       </div>
     </div>
+    {% endif %}
+    
 
 
 </div>
