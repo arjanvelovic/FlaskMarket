@@ -69,7 +69,10 @@ class Item(db.Model):
     
     @notactive.expression
     def notactive(cls):
-        return cls.notactive()
+        if datetime.utcnow() - timedelta(hours=5) >= Item.enddate:
+            return True
+        else:
+            return False
 
     
 class Bid(db.Model):

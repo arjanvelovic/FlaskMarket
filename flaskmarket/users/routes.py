@@ -1,7 +1,7 @@
-from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app
+from flask import render_template, url_for, flash, redirect, request, Blueprint
 from flask_login import login_user, current_user, logout_user, login_required
 from flaskmarket import db, bcrypt
-from flaskmarket.models import User, Item, Bid
+from flaskmarket.models import User, Item, Bid, Watchlist
 from flaskmarket.users.forms import (SignUpForm, SignInForm, UpdateAccountForm, RequestResetForm, ResetPasswordForm)
 from flaskmarket.users.utils import save_picture, send_reset_email
 
@@ -63,22 +63,32 @@ def account():
         form.address.data = current_user.address
         form.phonenumber.data = current_user.phonenumber
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
-    return render_template('account.html', title='Account',
+    return render_template('account.html', title='Account Details',
                            image_file=image_file, form=form)
 
-@users.route("/useritems/<string:email>")
+@users.route("/items/<string:email>")
 def user_items(email):
-    page = request.args.get('page', 1, type=int)
     user = User.query.filter_by(email=email).first_or_404()
     if Item.query.filter_by(author=user).count() == 0:
-        return render_template('empty.html', user=user, keyword = 'listings')
+        return render_template('empty.html', user=user, keyword = 'listings', title='User Listings')
     else:
-        items = Item.query.filter_by(author=user)\
-            .order_by(Item.enddate.desc())\
-            .paginate(page=page, per_page=5)
-        return render_template('user_items.html', items=items, user=user)
+        items = Item.query.filter_by(author=user).order_by(Item.enddate.desc())
+        return render_template('user_items.html', items=items, user=user, keyword = 'listings', title='User Listings')
 
-@users.route("/userbids/<string:email>")
+@users.route("/sold/<string:email>")
+def user_sold(email):
+    user = User.query.filter_by(email=email).first_or_404()
+    allitems = Item.query.filter_by(author=user).order_by(Item.enddate.desc())
+    solditems = []
+    for item in allitems:
+        if item.notactive and item.hasbuyer:
+            solditems.append(item)
+    if len(solditems) == 0:
+        return render_template('empty.html', user=user, keyword = 'sold items', title='Your Sold Items')
+    else:
+        return render_template('user_items.html', items=solditems, user=user, keyword = 'sold items', title='Your Sold Items')
+
+@users.route("/bids/<string:email>")
 def user_bids(email):
     user = User.query.filter_by(email=email).first_or_404()
     allbids = Bid.query.filter_by(bidder=user)\
@@ -88,24 +98,33 @@ def user_bids(email):
         if bid.item.notactive == False:
             bids.append(bid)
     if len(bids) == 0:
-        return render_template('empty.html', user=user, keyword = 'bids')
+        return render_template('empty.html', user=user, keyword = 'bids', title='Bids')
     else:
-        return render_template('user_bids.html', bids=bids, user=user)
+        return render_template('user_bids.html', bids=bids, user=user, title='Bids')
     
-@users.route("/userpurchases/<string:email>")
+@users.route("/purchases/<string:email>")
 def user_purchases(email):
     user = User.query.filter_by(email=email).first_or_404()
     allbids = Bid.query.filter_by(bidder=user)\
         .order_by(Bid.bidtime.desc())
     purchases = []
     for bid in allbids:
-        if bid.item.hasbuyer:
+        if bid.item.notactive:
             purchases.append(bid)
-    # current_app.logger.info(f'{purchases}')
     if len(purchases) == 0:
-        return render_template('empty.html', user=user, keyword = 'purchases')
+        return render_template('empty.html', user=user, keyword = 'purchases', title='Purchases')
     else:
-        return render_template('user_purchases.html', purchases=purchases, user=user)
+        return render_template('user_purchases.html', purchases=purchases, user=user, title='Purchases')
+    
+@users.route("/watchlist/<string:email>")
+def user_watchlist(email):
+    user = User.query.filter_by(email=email).first_or_404()
+    if Watchlist.query.filter_by(watcher=user).count() == 0:
+        return render_template('empty.html', user=user, keyword = 'watchlist', title='Watchlist')
+    else:
+        watchlist = Watchlist.query.filter_by(watcher=user)\
+        .order_by(Watchlist.id.desc())
+        return render_template('user_watchlist.html', watchlist=watchlist, user=user, title='Watchlist')
     
 
 @users.route("/reset_password", methods=['GET', 'POST'])
@@ -119,7 +138,6 @@ def reset_request():
         flash('An email has been sent with instructions to reset your password.', 'info')
         return redirect(url_for('users.signin'))
     return render_template('reset_request.html', title='Reset Password', form=form)
-
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
 def reset_token(token):

@@ -19,5 +19,4 @@ class SearchForm(FlaskForm):
     ]
     title = StringField('Title', render_kw={"placeholder": "Search Title"})
     category = SelectField('Categories', choices = CATEGORIES)
-    ended = BooleanField('Ended?')
     submit = SubmitField('Search Item')

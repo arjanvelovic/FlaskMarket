@@ -1,15 +1,13 @@
-from flask import (render_template, url_for, flash,
-                   redirect, request, abort, Blueprint, current_app)
+from flask import render_template, url_for, flash, redirect, request, abort, Blueprint
 from flask_login import current_user, login_required
 from flaskmarket import db
-from flaskmarket.models import Item, Bid
+from flaskmarket.models import Item, Bid, Watchlist
 from flaskmarket.items.forms import ItemForm, BidForm, WatchlistForm
 from wtforms.validators import  NumberRange
 from datetime import datetime, timedelta
 from flaskmarket.items.utils import save_picture
 
 items = Blueprint('items', __name__)
-
 
 @items.route("/item/new", methods=['GET', 'POST'])
 @login_required
@@ -23,10 +21,10 @@ def new_item():
         item = Item(title=form.title.data, description=form.description.data, category=form.category.data, image_file=picture_file, price=form.price.data, author=current_user, enddate=datetime.utcnow() + timedelta(days=7) - timedelta(hours=5))
         db.session.add(item)
         db.session.commit()
-        flash('Your item has been created!', 'success')
+        flash('Your listing is live!', 'success')
         return redirect(url_for('main.home'))
-    return render_template('create_item.html', title='New Item',
-                           form=form, legend='New Item')
+    return render_template('create_item.html', title='List Item',
+                           form=form, legend='List Item')
 
 @items.route("/item/<int:item_id>", methods=['GET', 'POST'])
 def item(item_id):
@@ -34,9 +32,7 @@ def item(item_id):
 
     bidform = BidForm()
     watchlistform = WatchlistForm()
-    bidform.bidvalue.validators = [NumberRange(min=item.price+1, message='You must beat the current bid by atleast $1')]
-
-    # current_app.logger.info(f'enddate:{item.enddate},timenow:{datetime.utcnow()}, notactive:{item.notactive}')
+    bidform.bidvalue.validators = [NumberRange(min=item.price+1, message='You must beat the current bid by atleast $1.00')]
 
     if current_user.is_authenticated:
         if bidform.validate_on_submit():
@@ -52,31 +48,28 @@ def item(item_id):
             
             item.price = bidform.bidvalue.data
             db.session.commit()
-            flash('You have the highest Bid', 'success')
+            flash('You have the highest bid!', 'success')
             return redirect(url_for('items.item', item_id=item.id))
         
-        # watchlistform.watching.data = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).all()
+        watchlistform.watching.data = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).all()
 
-        # if watchlistform.validate_on_submit():
-        #     app.logger.info(watchlistform.watching.raw_data)
-        #     if watchlistform.watching.raw_data:
-        #         app.logger.info('added to watchlist')
-        #         watchlist = Watchlist(watching = True, item_id=item_id, user_id=current_user.id)
-        #         db.session.add(watchlist)
-        #         flash('Added to Watch List', 'success')
-        #     else:
-        #         app.logger.info('deleted from watchlist')
-        #         watchlist = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).first()
-        #         try:
-        #             db.session.delete(watchlist)
-        #             flash('Removed from Watch List', 'success')
-        #         except:
-        #             print("Something else went wrong")
+        if watchlistform.validate_on_submit():
+            if watchlistform.watching.raw_data:
+                watchlist = Watchlist(watching = True, item_id=item_id, user_id=current_user.id)
+                db.session.add(watchlist)
+                flash('Added to Watch List', 'success')
+            else:
+                watchlist = Watchlist.query.filter_by(item_id=item_id, user_id=current_user.id).first()
+                try:
+                    db.session.delete(watchlist)
+                    flash('Removed from Watch List', 'success')
+                except:
+                    print("Something went wrong")
 
-        #     db.session.commit()
-        #     return redirect(url_for('item', item_id=item.id))
+            db.session.commit()
+            return redirect(url_for('items.item', item_id=item.id))
 
-    return render_template('item.html', item=item, bidform=bidform, watchlistform = watchlistform)
+    return render_template('item.html', title=item.title, item=item, bidform=bidform, watchlistform = watchlistform)
 
 @items.route("/item/<int:item_id>/update", methods=['GET', 'POST'])
 @login_required
@@ -93,7 +86,7 @@ def update_item(item_id):
         itemrelist = Item(title=form.title.data, description=form.description.data, category=form.category.data, image_file=picture_file, price=form.price.data, author=current_user, enddate=datetime.utcnow() + timedelta(days=7) - timedelta(hours=5))
         db.session.add(itemrelist)
         db.session.commit()
-        flash('Your have relisted the item', 'success')
+        flash('Your have relisted the item!', 'success')
         return redirect(url_for('main.home'))
 
     elif form.validate_on_submit() and item.notactive == False:
@@ -131,5 +124,5 @@ def delete_item(item_id):
         abort(403)
     db.session.delete(item)
     db.session.commit()
-    flash('Your item has been deleted!', 'success')
+    flash('Your item has been deleted', 'success')
     return redirect(url_for('main.home'))

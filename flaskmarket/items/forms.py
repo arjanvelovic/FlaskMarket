@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
-from wtforms import StringField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField, IntegerField
+from wtforms import StringField, SubmitField, BooleanField, TextAreaField, SelectField, DecimalField
 from wtforms.validators import DataRequired
 
 class ItemForm(FlaskForm):
@@ -30,4 +30,4 @@ class BidForm(FlaskForm):
 
 class WatchlistForm(FlaskForm):
     watching = BooleanField('Add to Watchlist')
-    submit = SubmitField('Add to Watchlist')
+    submit = SubmitField('Watchlist')
