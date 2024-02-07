@@ -4,6 +4,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 class Config:
+    FLASK_ENV = os.getenv('FLASK_ENV')
     SECRET_KEY = os.getenv('SECRET_KEY')
 
     SQLALCHEMY_DATABASE_URI = 'sqlite:///site.db'
